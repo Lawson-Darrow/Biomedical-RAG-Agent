@@ -22,8 +22,9 @@ vs. open-weight models with a rigorous faithfulness eval.
 - Curated open-access corpus: PubMedQA contexts + a bounded PMC-OA slice.
 - Hybrid retrieval: dense (sentence-transformers) + BM25, over pgvector.
 - Agent: retrieve → synthesize answer with inline citations → abstain when evidence insufficient.
-- Model-agnostic synthesizer; run frontier (Claude/GPT) vs. open-weights (default Qwen2.5-7B)
-  through the same pipeline.
+- Model-agnostic synthesizer; run frontier (Claude, GPT) vs. an open spectrum
+  (DeepSeek, Kimi/Moonshot, Qwen/Alibaba) through the same pipeline, all routed via
+  LLMGateway (OSS, OpenAI-compatible, BYOK).
 - Surfaces: FastAPI + React web demo (primary) and a reproducible eval notebook + report.
 
 **Out (v1, deliberately):**
@@ -50,7 +51,9 @@ vs. open-weight models with a rigorous faithfulness eval.
 2. **E2E skeleton** — retrieve → cited answer, one model, one metric.
 3. **Retrieval** — full hybrid retrieval + abstention + citations.
 4. **Eval harness** — full metric suite, one model.
-5. **Comparison** — model-agnostic swap → frontier-vs-open run.
+5. **Comparison** — model-agnostic swap → frontier-vs-open run. **Verify LLMGateway
+   provider/precision pinning first** so each model (e.g. DeepSeek at fp8) is served
+   from a fixed upstream — otherwise the comparison numbers aren't reproducible.
 6. **Web demo** — FastAPI + React.
 7. **Writeup** — report + README + reproducibility pass.
 
@@ -62,11 +65,18 @@ vs. open-weight models with a rigorous faithfulness eval.
 
 ## Defaults (non-load-bearing, easy to swap)
 
+- Model gateway: **LLMGateway** (OSS, OpenAI-compatible, BYOK).
 - Vector store: **pgvector** (Chroma/FAISS if zero-infra wanted).
-- Open model: **Qwen2.5-7B**.
+- Open arm: **DeepSeek + Kimi (Moonshot) + Qwen (Alibaba)**; exact IDs pinned from the catalog.
 - Primary benchmark: **PubMedQA**.
+
+## Tooling principle
+
+Prefer OSS tools wherever a viable option exists (e.g. LLMGateway over a closed router,
+pgvector over a proprietary store). Lower lock-in, better reproducibility, and a possible
+upstream-contribution angle.
 
 ## Stack
 
-Python · FastAPI · sentence-transformers · pgvector · hand-rolled orchestration
+Python · FastAPI · sentence-transformers · pgvector · LLMGateway · hand-rolled orchestration
 (LangChain/LlamaIndex only if it earns its weight) · React + Vite · Vercel + backend host.

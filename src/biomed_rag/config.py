@@ -11,14 +11,12 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
-    # Frontier providers (at least one required for the frontier arm)
-    anthropic_api_key: str | None = None
-    openai_api_key: str | None = None
-
-    # Open-weights endpoint (OpenAI-compatible)
-    open_model_base_url: str = "http://localhost:11434/v1"
-    open_model_name: str = "qwen2.5:7b"
-    open_model_api_key: str = "ollama"
+    # All model traffic routes through LLMGateway (OSS, OpenAI-compatible).
+    # Frontier (Claude/GPT) and open (DeepSeek/Kimi/Qwen) are all model IDs
+    # behind this one endpoint. Provider keys are added BYOK in the LLMGateway
+    # dashboard, so the app only needs the gateway key.
+    llmgateway_api_key: str | None = None
+    llmgateway_base_url: str = "https://api.llmgateway.io/v1"
 
     # Vector store
     database_url: str = "postgresql://postgres:postgres@localhost:5432/biomed_rag"

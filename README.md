@@ -28,7 +28,7 @@ ingest → chunk → embed → vector store (pgvector) + BM25
 |--------------|--------------------------|------------------------------------------------------------|
 | Ingestion    | `biomed_rag.ingest`      | Acquire corpus (PubMedQA contexts + PMC-OA slice), chunk   |
 | Retrieval    | `biomed_rag.retrieval`   | Dense (sentence-transformers) + BM25 hybrid over pgvector  |
-| Models       | `biomed_rag.models`      | Model-agnostic LLM interface — frontier + open-weights     |
+| Models       | `biomed_rag.models`      | Model-agnostic LLM interface — frontier + open, via LLMGateway |
 | Agent        | `biomed_rag.agent`       | Retrieve → synthesize cited answer → abstain               |
 | Eval         | `biomed_rag.eval`        | Metric suite + benchmark runners + report                  |
 | API          | `api/`                   | FastAPI service backing the web demo                       |
