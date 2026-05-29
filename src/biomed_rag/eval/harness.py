@@ -6,6 +6,8 @@ retrieval metrics, and the judge — so [n] citations line up across all three.
 
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor
+
 from biomed_rag.agent.rag import synthesize
 from biomed_rag.eval import metrics
 from biomed_rag.eval.judge import JUDGE_MODEL, judge_answer
@@ -34,33 +36,24 @@ def evaluate(
     k: int = 6,
     abstain_threshold: float | None = None,
     with_judge: bool = True,
+    workers: int = 1,
 ) -> dict:
-    preds: list[str] = []
-    golds: list[str] = []
-    recalls: list[float] = []
-    mrrs: list[float] = []
-    ndcgs: list[float] = []
-    hitrates: list[float] = []
-    faiths: list[float] = []
-    hallucs: list[float] = []
-    cit_accs: list[float] = []
-    records: list[dict] = []
-    n_abstain = 0
-
-    for ex in examples:
-        hits = index.search(ex.question, k=k)
-        retrieved_keys = [(h.passage.doc_id, h.passage.idx) for h in hits]
+    # Phase 1 — retrieval (sequential; the pgvector connection isn't thread-safe).
+    # Cheap relative to the LLM calls, and lets retrieval metrics be computed here.
+    hits_by_ex = [index.search(ex.question, k=k) for ex in examples]
+    recalls, mrrs, ndcgs, hitrates = [], [], [], []
+    for ex, hits in zip(examples, hits_by_ex):
+        keys = [(h.passage.doc_id, h.passage.idx) for h in hits]
         relevant = {(ex.qid, i) for i in range(len(ex.contexts))}
+        recalls.append(metrics.recall_at_k(keys, relevant))
+        mrrs.append(metrics.mrr(keys, relevant))
+        ndcgs.append(metrics.ndcg_at_k(keys, relevant, k))
+        hitrates.append(metrics.hit_rate(keys, relevant))
 
-        recalls.append(metrics.recall_at_k(retrieved_keys, relevant))
-        mrrs.append(metrics.mrr(retrieved_keys, relevant))
-        ndcgs.append(metrics.ndcg_at_k(retrieved_keys, relevant, k))
-        hitrates.append(metrics.hit_rate(retrieved_keys, relevant))
-
+    # Phase 2 — generate + judge per example (parallelizable: pure HTTP, no shared DB).
+    def work(i: int) -> dict:
+        ex, hits = examples[i], hits_by_ex[i]
         res = synthesize(ex.question, hits, model=model, abstain_threshold=abstain_threshold)
-        preds.append(res.decision)
-        golds.append(ex.final_decision)
-
         rec = {
             "qid": ex.qid,
             "gold": ex.final_decision,
@@ -68,29 +61,35 @@ def evaluate(
             "abstained": res.abstained,
             "n_citations": len(res.citations),
         }
-
-        if res.abstained:
-            n_abstain += 1
-        elif with_judge:
+        if not res.abstained and with_judge:
             context = "\n\n".join(f"[{n}] {h.passage.text}" for n, h in enumerate(hits, 1))
             j = judge_answer(
                 ex.question, context, res.answer, [c["n"] for c in res.citations], model=judge_model
             )
-            # Only aggregate where the metric is defined: faithfulness/hallucination
-            # over answers with >=1 claim; citation accuracy over answers that cited.
-            if j.n_claims > 0:
-                faiths.append(j.faithfulness)
-                hallucs.append(j.hallucination_rate)
-            if res.citations:
-                cit_accs.append(j.citation_accuracy)
             rec |= {
                 "faithfulness": round(j.faithfulness, 3),
                 "hallucination": round(j.hallucination_rate, 3),
                 "citation_acc": round(j.citation_accuracy, 3),
                 "n_claims": j.n_claims,
+                "_cited": bool(res.citations),
             }
+        return rec
 
-        records.append(rec)
+    idxs = range(len(examples))
+    if workers > 1:
+        with ThreadPoolExecutor(max_workers=workers) as pool:
+            records = list(pool.map(work, idxs))
+    else:
+        records = [work(i) for i in idxs]
+
+    # Aggregate (order preserved by pool.map).
+    preds = [r["pred"] for r in records]
+    golds = [r["gold"] for r in records]
+    n_abstain = sum(r["abstained"] for r in records)
+    # faithfulness/hallucination over answers with >=1 claim; citation acc over answers that cited.
+    faiths = [r["faithfulness"] for r in records if r.get("n_claims", 0) > 0]
+    hallucs = [r["hallucination"] for r in records if r.get("n_claims", 0) > 0]
+    cit_accs = [r["citation_acc"] for r in records if r.get("_cited")]
 
     return {
         "config": {
@@ -132,3 +131,50 @@ def abstention_probe(
         res = synthesize(q, index.search(q, k=k), model=model, abstain_threshold=abstain_threshold)
         abstained += res.abstained
     return abstained / len(questions) if questions else 0.0
+
+
+def closed_book_eval(examples: list[Example], model: str, workers: int = 1) -> dict:
+    """Task accuracy with no retrieval (grounding-ablation baseline)."""
+    from biomed_rag.agent.rag import answer_closed_book
+
+    def work(i: int) -> tuple[str, str]:
+        ex = examples[i]
+        return answer_closed_book(ex.question, model).decision, ex.final_decision
+
+    idxs = range(len(examples))
+    if workers > 1:
+        with ThreadPoolExecutor(max_workers=workers) as pool:
+            pairs = list(pool.map(work, idxs))
+    else:
+        pairs = [work(i) for i in idxs]
+
+    preds = [p for p, _ in pairs]
+    golds = [g for _, g in pairs]
+    return {
+        "accuracy": metrics.accuracy(preds, golds),
+        "macro_f1": metrics.macro_f1(preds, golds),
+        "n": len(examples),
+    }
+
+
+def abstention_sweep(
+    answerable: list[str],
+    off_topic: list[str],
+    index: Retriever,
+    k: int,
+    thresholds: list[float],
+) -> dict[float, dict[str, float]]:
+    """Tune the abstention threshold without any LLM calls.
+
+    The gate is purely retrieval-based (abstain if best dense_sim < threshold), so we
+    only need each question's best dense similarity, then sweep thresholds over it.
+    """
+    ans_sims = [max((h.dense_sim for h in index.search(q, k=k)), default=0.0) for q in answerable]
+    off_sims = [max((h.dense_sim for h in index.search(q, k=k)), default=0.0) for q in off_topic]
+    return {
+        t: {
+            "answerable_abstain": sum(s < t for s in ans_sims) / len(ans_sims) if ans_sims else 0.0,
+            "off_topic_abstain": sum(s < t for s in off_sims) / len(off_sims) if off_sims else 0.0,
+        }
+        for t in thresholds
+    }

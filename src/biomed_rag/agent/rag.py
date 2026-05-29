@@ -101,3 +101,36 @@ def answer(
 ) -> RagAnswer:
     """Convenience: retrieve top-k then synthesize."""
     return synthesize(question, index.search(question, k=k), model, abstain_threshold)
+
+
+_CB_SYSTEM = (
+    "You are a biomedical expert. Answer the question from your own knowledge. "
+    "Do not claim sources you were not given."
+)
+_CB_PROMPT = """Question: {question}
+
+Respond in strict JSON:
+  "answer": a concise answer,
+  "decision": one of "yes", "no", "maybe".
+JSON only."""
+
+
+def answer_closed_book(question: str, model: str) -> RagAnswer:
+    """No retrieval: the model answers from parametric knowledge. The grounding
+    ablation baseline — quantifies what retrieval buys over closed-book."""
+    raw = chat(
+        model,
+        [
+            {"role": "system", "content": _CB_SYSTEM},
+            {"role": "user", "content": _CB_PROMPT.format(question=question)},
+        ],
+        temperature=0,
+    )
+    data = safe_json(raw)
+    return RagAnswer(
+        answer=data.get("answer", ""),
+        decision=str(data.get("decision", "")).lower().strip(),
+        citations=[],
+        abstained=False,
+        raw=raw,
+    )
