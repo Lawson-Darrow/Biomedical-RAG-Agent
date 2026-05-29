@@ -46,25 +46,28 @@ ingest → chunk → embed → vector store (pgvector) + BM25
 
 ## Status
 
-Milestone 5 — frontier vs. open comparison on the shared harness. Full results in
+Milestone 5 — frontier vs. open comparison + grounding ablation. Full results in
 [`eval_results/comparison.md`](eval_results/comparison.md). Judge `gpt-4.1`, hybrid
-retrieval, 20 questions / 1028-passage corpus:
+retrieval, **150 questions / 1363-passage corpus**:
 
-| model | tier | acc | faith | halluc | cit_acc | recall@6 | abst(off)↑ |
-|---|---|---|---|---|---|---|---|
-| gpt-4.1-mini | frontier | 0.55 | 0.99 | 0.01 | 0.91 | 0.82 | 0.80 |
-| claude-haiku-4-5 | frontier | 0.55 | 0.99 | 0.01 | 1.00 | 0.82 | 1.00 |
-| deepseek-v3.2 | open | 0.55 | 1.00 | 0.00 | 0.90 | 0.82 | 0.80 |
-| qwen-flash | open | 0.60 | 0.92 | 0.08 | 0.97 | 0.82 | 0.80 |
+| model | tier | acc | macroF1 | faith | halluc | cit_acc | recall@6 | abst(off)↑ |
+|---|---|---|---|---|---|---|---|---|
+| gpt-4.1-mini | frontier | 0.63 | 0.53 | 0.94 | 0.06 | 0.84 | 0.82 | 0.80 |
+| claude-haiku-4-5 | frontier | 0.58 | 0.53 | 0.96 | 0.04 | 0.87 | 0.82 | 1.00 |
+| deepseek-v3.2 | open | 0.60 | 0.51 | **0.98** | **0.02** | **0.97** | 0.82 | 1.00 |
+| qwen-flash | open | 0.59 | 0.50 | 0.91 | 0.09 | 0.93 | 0.82 | 0.60 |
+| gpt-4.1-mini (closed-book) | ablation | 0.45 | 0.37 | – | – | – | – | – |
 
-Finding: **open models are competitive with frontier** on grounded biomedical RAG
-(within noise at N=20). `recall@6` is identical across models (retrieval is
-model-independent — a harness sanity check). Provenance is captured per model.
+Findings:
+1. **Retrieval works:** closed-book → hybrid RAG lifts accuracy **0.45 → 0.63 (+18 pts)**.
+2. **Open ≥ frontier on grounding:** DeepSeek-V3.2 leads faithfulness (0.98), hallucination (0.02), and citation accuracy (0.97), matching frontier accuracy.
+3. **Caution differs:** Qwen-flash answers aggressively (worst faithfulness); Claude/DeepSeek abstain conservatively. `recall@6` is identical across models (harness sanity check).
 
 ```bash
-docker compose up -d                                                # Postgres + pgvector
-PYTHONPATH=src .venv/Scripts/python.exe scripts/run_eval.py --n 40   # single model, full metrics
-PYTHONPATH=src .venv/Scripts/python.exe scripts/run_compare.py --n 20  # frontier vs open
+docker compose up -d                                                  # Postgres + pgvector
+PYTHONPATH=src .venv/Scripts/python.exe scripts/run_eval.py --n 40     # single model, full metrics
+PYTHONPATH=src .venv/Scripts/python.exe scripts/run_compare.py --n 150 # frontier vs open + ablation
+PYTHONPATH=src .venv/Scripts/python.exe scripts/tune_abstain.py        # abstention threshold sweep (free)
 ```
 
 (`run_m2.py` = BM25-only skeleton; `run_m3.py` = hybrid retrieval diagnostics.) See [SPEC.md](SPEC.md) for milestones.
