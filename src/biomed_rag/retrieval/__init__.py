@@ -1,8 +1,3 @@
-"""Hybrid retrieval: dense (sentence-transformers) + BM25 over a pgvector store.
-
-Milestone 1 stub. Implementation lands in Milestone 3:
-    - embed passages and upsert into pgvector
-    - BM25 index for lexical recall
-    - fuse dense + lexical scores; optional reranker
-    - return top-k passages with provenance for citation
+"""Retrieval over the corpus. See `store.py` — BM25 lexical index for now (M2).
+Milestone 3 adds the dense arm (local OSS embeddings) + pgvector and fuses them.
 """

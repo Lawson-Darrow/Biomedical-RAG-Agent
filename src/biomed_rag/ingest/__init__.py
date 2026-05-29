@@ -1,7 +1,3 @@
-"""Corpus ingestion: acquire PubMedQA contexts + a bounded PMC-OA slice, then chunk.
-
-Milestone 1 stub. Implementation lands in Milestone 2+:
-    - download/load source documents
-    - chunk into passages with stable IDs
-    - hand off to `biomed_rag.retrieval` for embedding + indexing
+"""Corpus ingestion. See `pubmedqa.py` for loading PubMedQA (PQA-L) and pooling
+its contexts into a passage corpus. A bounded PMC-OA slice is added in M3.
 """

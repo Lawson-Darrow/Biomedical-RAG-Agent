@@ -46,7 +46,10 @@ ingest → chunk → embed → vector store (pgvector) + BM25
 
 ## Status
 
-Milestone 1 — scaffold. See [SPEC.md](SPEC.md) for the full plan and milestones.
+Milestone 2 — end-to-end skeleton working: retrieve (BM25) → grounded cited answer
+→ scored on PubMedQA, model-agnostic across frontier and open models via LLMGateway.
+Run it: `PYTHONPATH=src .venv/Scripts/python.exe scripts/run_m2.py --n 20 --model gpt-4.1-mini`.
+See [SPEC.md](SPEC.md) for the full plan and milestones.
 
 ## Setup
 

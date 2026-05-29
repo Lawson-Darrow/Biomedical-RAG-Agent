@@ -1,7 +1,5 @@
-"""Model-agnostic LLM interface so the same pipeline runs frontier and open-weight models.
+"""Model-agnostic LLM access — every model (frontier + open) via LLMGateway.
 
-Milestone 1 stub. Implementation lands in Milestone 2 (one model) / Milestone 5 (swap):
-    - a thin `LLMClient` protocol: `.generate(messages, **opts) -> str`
-    - adapters: Anthropic, OpenAI, and an OpenAI-compatible open-weights endpoint (Qwen2.5-7B)
-    - the comparison axis (frontier vs open) is driven entirely through this interface
+See `client.py` for `get_client`, `chat`, and `embed`. Swapping models is an
+ID change, which is what drives the frontier-vs-open comparison axis.
 """
