@@ -52,7 +52,10 @@ vs. open-weight models with a rigorous faithfulness eval.
 3. **Retrieval** — full hybrid retrieval + abstention + citations. ✅ done
    (fastembed/BGE dense + BM25 fused via RRF over pgvector; retrieval-gated abstention;
    hit-rate@6: hybrid 100% > dense 99% > bm25 97% on 100q/330 passages).
-4. **Eval harness** — full metric suite, one model.
+4. **Eval harness** — full metric suite, one model. ✅ done
+   (retrieval: recall/mrr/ndcg/hit@k · task: accuracy/macro-F1 · grounding via
+   LLM-judge: faithfulness/hallucination/citation-acc · abstention both directions;
+   reproducible JSON in `eval_results/`).
 5. **Comparison** — model-agnostic swap → frontier-vs-open run. **Verify LLMGateway
    provider/precision pinning first** so each model (e.g. DeepSeek at fp8) is served
    from a fixed upstream — otherwise the comparison numbers aren't reproducible.

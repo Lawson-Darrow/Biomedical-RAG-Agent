@@ -17,7 +17,7 @@ import argparse
 from biomed_rag.agent.rag import answer
 from biomed_rag.ingest.pubmedqa import build_corpus, load_examples
 from biomed_rag.retrieval.hybrid import HybridIndex
-from biomed_rag.retrieval.pgvector_store import connect, dense_search, ingest, init_schema
+from biomed_rag.retrieval.pgvector_store import connect, dense_search, ingest, init_schema, reset_corpus
 from biomed_rag.retrieval.store import InMemoryIndex
 
 
@@ -35,6 +35,7 @@ def main() -> None:
 
     conn = connect()
     init_schema(conn)
+    reset_corpus(conn)
     n_ingested = ingest(conn, corpus)
     print(f"corpus: {len(examples)} questions, {len(corpus)} passages ({n_ingested} upserted to pgvector)")
 

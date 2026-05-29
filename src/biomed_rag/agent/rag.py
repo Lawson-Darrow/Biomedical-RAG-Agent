@@ -6,12 +6,11 @@ response_format), so the exact same call works across every model we compare.
 
 from __future__ import annotations
 
-import json
-import re
 from dataclasses import dataclass
 
 from biomed_rag.models.client import chat
-from biomed_rag.retrieval.base import Retriever
+from biomed_rag.retrieval.base import Hit, Retriever
+from biomed_rag.util import safe_json
 
 SYSTEM = (
     "You are a biomedical evidence assistant for clinicians and researchers. "
@@ -42,31 +41,18 @@ class RagAnswer:
     raw: str
 
 
-def _safe_json(s: str) -> dict:
-    try:
-        return json.loads(s)
-    except json.JSONDecodeError:
-        m = re.search(r"\{.*\}", s, re.S)
-        if m:
-            try:
-                return json.loads(m.group(0))
-            except json.JSONDecodeError:
-                pass
-    return {}
-
-
-def answer(
+def synthesize(
     question: str,
-    index: Retriever,
+    hits: list[Hit],
     model: str,
-    k: int = 8,
     abstain_threshold: float | None = None,
 ) -> RagAnswer:
-    hits = index.search(question, k=k)
+    """Turn retrieved passages into a grounded, cited answer (no retrieval here).
 
-    # Retrieval-gated abstention: if the best dense match is too weak, decline
-    # without spending a model call. Only fires when dense signal is present
-    # (BM25-only hits carry dense_sim=0, so pass abstain_threshold=None there).
+    Retrieval-gated abstention: if the best dense match is too weak, decline
+    without spending a model call. Only fires when dense signal is present
+    (BM25-only hits carry dense_sim=0, so pass abstain_threshold=None there).
+    """
     if abstain_threshold is not None and hits:
         best_sim = max(h.dense_sim for h in hits)
         if best_sim < abstain_threshold:
@@ -89,7 +75,7 @@ def answer(
         ],
         temperature=0,
     )
-    data = _safe_json(raw)
+    data = safe_json(raw)
 
     cited = []
     for n in data.get("citations", []):
@@ -104,3 +90,14 @@ def answer(
         abstained=bool(data.get("abstain", False)),
         raw=raw,
     )
+
+
+def answer(
+    question: str,
+    index: Retriever,
+    model: str,
+    k: int = 8,
+    abstain_threshold: float | None = None,
+) -> RagAnswer:
+    """Convenience: retrieve top-k then synthesize."""
+    return synthesize(question, index.search(question, k=k), model, abstain_threshold)

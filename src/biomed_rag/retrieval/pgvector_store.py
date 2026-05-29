@@ -42,6 +42,17 @@ def init_schema(conn: psycopg.Connection) -> None:
     conn.commit()
 
 
+def reset_corpus(conn: psycopg.Connection) -> None:
+    """Empty the table so the store matches exactly the corpus about to be ingested.
+
+    The pgvector volume persists across runs; without this, leftover passages from a
+    prior run would make the dense arm search a different corpus than BM25.
+    """
+    with conn.cursor() as cur:
+        cur.execute("TRUNCATE passages RESTART IDENTITY")
+    conn.commit()
+
+
 def ingest(conn: psycopg.Connection, passages: list[Passage]) -> int:
     """Embed and upsert passages. Idempotent on (doc_id, idx)."""
     vectors = encode_passages([p.text for p in passages])

@@ -46,16 +46,24 @@ ingest → chunk → embed → vector store (pgvector) + BM25
 
 ## Status
 
-Milestone 3 — hybrid retrieval working: BM25 + dense (fastembed/BGE) fused via RRF
-over pgvector, with a retrieval-gated abstention threshold and inline citations.
-Retrieval hit-rate@6 on 100 questions: **hybrid 100% > dense 99% > bm25 97%**.
+Milestone 4 — full evaluation harness: retrieval, task, grounding (LLM-as-judge),
+and abstention metrics, written reproducibly to `eval_results/`.
+
+Baseline (gpt-4.1-mini generator, gpt-4.1 judge, hybrid retrieval, 40 questions / 1028-passage corpus):
+
+| group | metrics |
+|---|---|
+| retrieval | recall@6 0.85 · mrr 0.97 · ndcg@6 0.86 · hit@6 1.00 |
+| task | accuracy 0.60 · macro-F1 0.48 |
+| grounding | faithfulness 0.97 · hallucination 0.03 · citation-acc 0.75 |
+| abstention | answerable 0.13 (↓ better) · off-topic 0.80 (↑ better) |
 
 ```bash
 docker compose up -d                                          # Postgres + pgvector
-PYTHONPATH=src .venv/Scripts/python.exe scripts/run_m3.py --n 100 --eval-n 15
+PYTHONPATH=src .venv/Scripts/python.exe scripts/run_eval.py --corpus-n 300 --n 40
 ```
 
-(`scripts/run_m2.py` is the earlier BM25-only skeleton.) See [SPEC.md](SPEC.md) for milestones.
+(`run_m2.py` = BM25-only skeleton; `run_m3.py` = hybrid retrieval diagnostics.) See [SPEC.md](SPEC.md) for milestones.
 
 ## Setup
 
