@@ -46,21 +46,25 @@ ingest → chunk → embed → vector store (pgvector) + BM25
 
 ## Status
 
-Milestone 4 — full evaluation harness: retrieval, task, grounding (LLM-as-judge),
-and abstention metrics, written reproducibly to `eval_results/`.
+Milestone 5 — frontier vs. open comparison on the shared harness. Full results in
+[`eval_results/comparison.md`](eval_results/comparison.md). Judge `gpt-4.1`, hybrid
+retrieval, 20 questions / 1028-passage corpus:
 
-Baseline (gpt-4.1-mini generator, gpt-4.1 judge, hybrid retrieval, 40 questions / 1028-passage corpus):
+| model | tier | acc | faith | halluc | cit_acc | recall@6 | abst(off)↑ |
+|---|---|---|---|---|---|---|---|
+| gpt-4.1-mini | frontier | 0.55 | 0.99 | 0.01 | 0.91 | 0.82 | 0.80 |
+| claude-haiku-4-5 | frontier | 0.55 | 0.99 | 0.01 | 1.00 | 0.82 | 1.00 |
+| deepseek-v3.2 | open | 0.55 | 1.00 | 0.00 | 0.90 | 0.82 | 0.80 |
+| qwen-flash | open | 0.60 | 0.92 | 0.08 | 0.97 | 0.82 | 0.80 |
 
-| group | metrics |
-|---|---|
-| retrieval | recall@6 0.85 · mrr 0.97 · ndcg@6 0.86 · hit@6 1.00 |
-| task | accuracy 0.60 · macro-F1 0.48 |
-| grounding | faithfulness 0.97 · hallucination 0.03 · citation-acc 0.75 |
-| abstention | answerable 0.13 (↓ better) · off-topic 0.80 (↑ better) |
+Finding: **open models are competitive with frontier** on grounded biomedical RAG
+(within noise at N=20). `recall@6` is identical across models (retrieval is
+model-independent — a harness sanity check). Provenance is captured per model.
 
 ```bash
-docker compose up -d                                          # Postgres + pgvector
-PYTHONPATH=src .venv/Scripts/python.exe scripts/run_eval.py --corpus-n 300 --n 40
+docker compose up -d                                                # Postgres + pgvector
+PYTHONPATH=src .venv/Scripts/python.exe scripts/run_eval.py --n 40   # single model, full metrics
+PYTHONPATH=src .venv/Scripts/python.exe scripts/run_compare.py --n 20  # frontier vs open
 ```
 
 (`run_m2.py` = BM25-only skeleton; `run_m3.py` = hybrid retrieval diagnostics.) See [SPEC.md](SPEC.md) for milestones.

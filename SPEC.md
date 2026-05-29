@@ -56,9 +56,13 @@ vs. open-weight models with a rigorous faithfulness eval.
    (retrieval: recall/mrr/ndcg/hit@k · task: accuracy/macro-F1 · grounding via
    LLM-judge: faithfulness/hallucination/citation-acc · abstention both directions;
    reproducible JSON in `eval_results/`).
-5. **Comparison** — model-agnostic swap → frontier-vs-open run. **Verify LLMGateway
-   provider/precision pinning first** so each model (e.g. DeepSeek at fp8) is served
-   from a fixed upstream — otherwise the comparison numbers aren't reproducible.
+5. **Comparison** — model-agnostic swap → frontier-vs-open run. ✅ done
+   (`scripts/run_compare.py`; results in `eval_results/comparison.md`).
+   **Pinning:** LLMGateway auto-routes but `response.model` returns full provenance
+   (`provider/model:region`, e.g. `alibaba/deepseek-v3.2:cn-beijing`), captured per
+   run — explicit pinning is a follow-up if needed. Plan limits: `qwen-max`/big
+   `qwen3` are plan-gated and `kimi-k2` mis-routes upstream, so both are excluded
+   (logged, not silently dropped).
 6. **Web demo** — FastAPI + React.
 7. **Writeup** — report + README + reproducibility pass.
 

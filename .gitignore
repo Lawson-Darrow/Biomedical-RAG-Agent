@@ -22,7 +22,8 @@ data/*
 !data/.gitkeep
 *.parquet
 *.faiss
-eval_results/
+eval_results/*
+!eval_results/comparison.md
 *.log
 
 # Node / frontend
