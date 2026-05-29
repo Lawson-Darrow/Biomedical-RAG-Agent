@@ -20,7 +20,7 @@ vs. open-weight models with a rigorous faithfulness eval.
 
 **In (v1):**
 - Curated open-access corpus: PubMedQA contexts + a bounded PMC-OA slice.
-- Hybrid retrieval: dense (sentence-transformers) + BM25, over pgvector.
+- Hybrid retrieval: dense (fastembed/BGE — ONNX, OSS, no torch) + BM25, fused via RRF, over pgvector.
 - Agent: retrieve → synthesize answer with inline citations → abstain when evidence insufficient.
 - Model-agnostic synthesizer; run frontier (Claude, GPT) vs. an open spectrum
   (DeepSeek, Kimi/Moonshot, Qwen/Alibaba) through the same pipeline, all routed via
@@ -49,7 +49,9 @@ vs. open-weight models with a rigorous faithfulness eval.
 
 1. **Scaffold** — repo structure, deps, docs, env. → *current*
 2. **E2E skeleton** — retrieve → cited answer, one model, one metric.
-3. **Retrieval** — full hybrid retrieval + abstention + citations.
+3. **Retrieval** — full hybrid retrieval + abstention + citations. ✅ done
+   (fastembed/BGE dense + BM25 fused via RRF over pgvector; retrieval-gated abstention;
+   hit-rate@6: hybrid 100% > dense 99% > bm25 97% on 100q/330 passages).
 4. **Eval harness** — full metric suite, one model.
 5. **Comparison** — model-agnostic swap → frontier-vs-open run. **Verify LLMGateway
    provider/precision pinning first** so each model (e.g. DeepSeek at fp8) is served
@@ -78,5 +80,6 @@ upstream-contribution angle.
 
 ## Stack
 
-Python · FastAPI · sentence-transformers · pgvector · LLMGateway · hand-rolled orchestration
-(LangChain/LlamaIndex only if it earns its weight) · React + Vite · Vercel + backend host.
+Python · FastAPI · fastembed (BGE, ONNX) · rank-bm25 · pgvector (Docker) · LLMGateway ·
+hand-rolled orchestration (LangChain/LlamaIndex only if it earns its weight) ·
+React + Vite · Vercel + backend host.

@@ -9,23 +9,17 @@ sentence-transformers, per the OSS-tooling principle) and fuses the two.
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
 
 from rank_bm25 import BM25Okapi
 
 from biomed_rag.ingest.pubmedqa import Passage
+from biomed_rag.retrieval.base import Hit
 
 _TOKEN = re.compile(r"[a-z0-9]+")
 
 
 def _tokenize(text: str) -> list[str]:
     return _TOKEN.findall(text.lower())
-
-
-@dataclass
-class Hit:
-    passage: Passage
-    score: float
 
 
 class InMemoryIndex:

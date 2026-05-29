@@ -13,8 +13,9 @@ dependencies = [
     "pydantic-settings>=2",
     "python-dotenv>=1",
     # retrieval
-    "sentence-transformers>=3",
-    "rank-bm25>=0.2",
+    "fastembed>=0.4",  # dense embeddings (ONNX, OSS, no torch — works on Python 3.14)
+    "rank-bm25>=0.2",  # lexical BM25
+    "numpy>=1.26",
     "pgvector>=0.3",
     "psycopg[binary]>=3.1",
     # models — OpenAI-compatible client pointed at LLMGateway (frontier + open)

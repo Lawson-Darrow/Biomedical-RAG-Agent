@@ -11,7 +11,7 @@ import re
 from dataclasses import dataclass
 
 from biomed_rag.models.client import chat
-from biomed_rag.retrieval.store import InMemoryIndex
+from biomed_rag.retrieval.base import Retriever
 
 SYSTEM = (
     "You are a biomedical evidence assistant for clinicians and researchers. "
@@ -55,8 +55,29 @@ def _safe_json(s: str) -> dict:
     return {}
 
 
-def answer(question: str, index: InMemoryIndex, model: str, k: int = 8) -> RagAnswer:
+def answer(
+    question: str,
+    index: Retriever,
+    model: str,
+    k: int = 8,
+    abstain_threshold: float | None = None,
+) -> RagAnswer:
     hits = index.search(question, k=k)
+
+    # Retrieval-gated abstention: if the best dense match is too weak, decline
+    # without spending a model call. Only fires when dense signal is present
+    # (BM25-only hits carry dense_sim=0, so pass abstain_threshold=None there).
+    if abstain_threshold is not None and hits:
+        best_sim = max(h.dense_sim for h in hits)
+        if best_sim < abstain_threshold:
+            return RagAnswer(
+                answer="Insufficient evidence in the retrieved literature to answer.",
+                decision="maybe",
+                citations=[],
+                abstained=True,
+                raw=f"(gated: best dense_sim={best_sim:.3f} < {abstain_threshold})",
+            )
+
     context = "\n\n".join(
         f"[{n}] (doc {h.passage.doc_id}) {h.passage.text}" for n, h in enumerate(hits, 1)
     )

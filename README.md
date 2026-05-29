@@ -27,7 +27,7 @@ ingest → chunk → embed → vector store (pgvector) + BM25
 | Layer        | Package                  | Role                                                       |
 |--------------|--------------------------|------------------------------------------------------------|
 | Ingestion    | `biomed_rag.ingest`      | Acquire corpus (PubMedQA contexts + PMC-OA slice), chunk   |
-| Retrieval    | `biomed_rag.retrieval`   | Dense (sentence-transformers) + BM25 hybrid over pgvector  |
+| Retrieval    | `biomed_rag.retrieval`   | Dense (fastembed/BGE) + BM25 hybrid (RRF) over pgvector     |
 | Models       | `biomed_rag.models`      | Model-agnostic LLM interface — frontier + open, via LLMGateway |
 | Agent        | `biomed_rag.agent`       | Retrieve → synthesize cited answer → abstain               |
 | Eval         | `biomed_rag.eval`        | Metric suite + benchmark runners + report                  |
@@ -46,10 +46,16 @@ ingest → chunk → embed → vector store (pgvector) + BM25
 
 ## Status
 
-Milestone 2 — end-to-end skeleton working: retrieve (BM25) → grounded cited answer
-→ scored on PubMedQA, model-agnostic across frontier and open models via LLMGateway.
-Run it: `PYTHONPATH=src .venv/Scripts/python.exe scripts/run_m2.py --n 20 --model gpt-4.1-mini`.
-See [SPEC.md](SPEC.md) for the full plan and milestones.
+Milestone 3 — hybrid retrieval working: BM25 + dense (fastembed/BGE) fused via RRF
+over pgvector, with a retrieval-gated abstention threshold and inline citations.
+Retrieval hit-rate@6 on 100 questions: **hybrid 100% > dense 99% > bm25 97%**.
+
+```bash
+docker compose up -d                                          # Postgres + pgvector
+PYTHONPATH=src .venv/Scripts/python.exe scripts/run_m3.py --n 100 --eval-n 15
+```
+
+(`scripts/run_m2.py` is the earlier BM25-only skeleton.) See [SPEC.md](SPEC.md) for milestones.
 
 ## Setup
 
