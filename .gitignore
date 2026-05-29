@@ -18,7 +18,7 @@ venv/
 !.env.example
 
 # Data & artifacts (downloaded corpora, embeddings, eval outputs)
-data/
+data/*
 !data/.gitkeep
 *.parquet
 *.faiss
