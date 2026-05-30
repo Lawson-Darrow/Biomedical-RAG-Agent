@@ -1,0 +1,52 @@
+:root {
+  --bg: #f6f7f9;
+  --card: #ffffff;
+  --border: #e3e6ea;
+  --ink: #1a2027;
+  --muted: #687280;
+  --accent: #1f6feb;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+}
+
+.wrap { max-width: 760px; margin: 0 auto; padding: 40px 20px 80px; }
+
+header h1 { margin: 0 0 6px; font-size: 1.7rem; }
+.sub { margin: 0 0 24px; color: var(--muted); font-size: 0.95rem; }
+
+.controls { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+textarea {
+  width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 12px;
+  font: inherit; resize: vertical;
+}
+.row { display: flex; gap: 10px; margin-top: 12px; }
+select { flex: 1; padding: 10px; border: 1px solid var(--border); border-radius: 8px; font: inherit; background: #fff; }
+button {
+  padding: 10px 22px; border: none; border-radius: 8px; background: var(--accent);
+  color: #fff; font: inherit; font-weight: 600; cursor: pointer;
+}
+button:disabled { opacity: 0.6; cursor: default; }
+
+.error { margin-top: 16px; padding: 12px 14px; background: #fdecea; border: 1px solid #f3c0c0; border-radius: 8px; color: #b42318; }
+
+.result { margin-top: 22px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+.badge { display: inline-block; padding: 4px 12px; border-radius: 999px; color: #fff; font-weight: 700; font-size: 0.8rem; letter-spacing: 0.03em; }
+.badge.abstain { background: #b25e09; }
+.answer { font-size: 1.05rem; margin: 14px 0 4px; }
+
+.citations { margin-top: 18px; border-top: 1px solid var(--border); padding-top: 14px; }
+.citations h3 { margin: 0 0 10px; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+.cite { display: flex; gap: 10px; margin-bottom: 12px; font-size: 0.9rem; }
+.cnum { color: var(--accent); font-weight: 700; flex-shrink: 0; }
+.cite a { color: var(--accent); text-decoration: none; font-weight: 600; }
+.cite p { margin: 4px 0 0; color: #3a434d; }
+
+.meta { margin-top: 14px; color: var(--muted); font-size: 0.8rem; font-family: ui-monospace, monospace; }

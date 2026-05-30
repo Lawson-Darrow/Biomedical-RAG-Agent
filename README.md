@@ -44,9 +44,25 @@ ingest → chunk → embed → vector store (pgvector) + BM25
 - **Task accuracy:** PubMedQA (yes/no/maybe); BioASQ stretch set
 - **Comparison axis:** all of the above × {frontier, open} + cost & latency
 
+## Demo
+
+![Biomedical RAG Agent demo](docs/demo.png)
+
+FastAPI backend + React/Vite frontend: ask a biomedical question, get a grounded answer
+with inline citations linked to PubMed, an abstention state when evidence is weak, and a
+model selector (frontier / open). Run both servers (after `docker compose up -d` and one
+ingest):
+
+```bash
+# backend (port 8000)
+PYTHONPATH=src .venv/Scripts/python.exe -m uvicorn api.main:app --port 8000
+# frontend (port 5173) — in frontend/
+npm install && npm run dev
+```
+
 ## Status
 
-Milestone 5 — frontier vs. open comparison + grounding ablation. Full results in
+Milestone 6 — web demo live (above). Milestone 5 — frontier vs. open comparison + grounding ablation. Full results in
 [`eval_results/comparison.md`](eval_results/comparison.md). Judge `gpt-4.1`, hybrid
 retrieval, **150 questions / 1363-passage corpus**:
 

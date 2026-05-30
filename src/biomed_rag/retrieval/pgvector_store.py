@@ -74,6 +74,13 @@ def ingest(conn: psycopg.Connection, passages: list[Passage]) -> int:
     return len(rows)
 
 
+def load_passages(conn: psycopg.Connection) -> list[Passage]:
+    """Reload the corpus from the DB (e.g. to rebuild the in-memory index in a server)."""
+    with conn.cursor() as cur:
+        cur.execute("SELECT doc_id, idx, text FROM passages ORDER BY id")
+        return [Passage(doc_id=d, idx=i, text=t) for d, i, t in cur.fetchall()]
+
+
 def dense_search(conn: psycopg.Connection, query: str, k: int) -> list[tuple[str, int, float]]:
     """Return [(doc_id, idx, cosine_sim)] for the top-k nearest passages."""
     qv = np.asarray(encode_query(query), dtype=np.float32)

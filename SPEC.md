@@ -63,7 +63,9 @@ vs. open-weight models with a rigorous faithfulness eval.
    run — explicit pinning is a follow-up if needed. Plan limits: `qwen-max`/big
    `qwen3` are plan-gated and `kimi-k2` mis-routes upstream, so both are excluded
    (logged, not silently dropped).
-6. **Web demo** — FastAPI + React.
+6. **Web demo** — FastAPI + React. ✅ done
+   (`api/main.py` loads the corpus from pgvector and serves grounded cited answers with
+   abstention + model selector; `frontend/` React/Vite UI links citations to PubMed).
 7. **Writeup** — report + README + reproducibility pass.
 
 ## Success criteria
