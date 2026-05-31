@@ -98,4 +98,4 @@ cp .env.example .env                               # then fill in keys
 
 ## License
 
-TBD (add before going public).
+MIT — see [LICENSE](LICENSE).
