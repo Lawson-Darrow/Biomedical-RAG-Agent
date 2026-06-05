@@ -1,0 +1,24 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "Biomedical RAG Agent: grounded literature QA with a frontier-vs-open evaluation harness"
+authors:
+  - family-names: "Darrow"
+    given-names: "Lawson"
+repository-code: "https://github.com/Lawson-Darrow/Biomedical-RAG-Agent"
+license: MIT
+version: "0.1.0"
+date-released: "2026-06-05"
+keywords:
+  - retrieval-augmented-generation
+  - rag
+  - biomedical-nlp
+  - llm-evaluation
+  - question-answering
+references:
+  - type: data
+    title: "PubMedQA: A Dataset for Biomedical Research Question Answering"
+    authors:
+      - family-names: "Jin"
+        given-names: "Qiao"
+    url: "https://arxiv.org/abs/1909.06146"
+    year: 2019
